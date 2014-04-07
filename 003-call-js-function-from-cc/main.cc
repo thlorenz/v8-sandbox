@@ -1,7 +1,5 @@
 #include <v8.h>
 #include <iostream>
-#include <fstream>
-#include <string>
 #include <cassert>
 
 using namespace v8;
@@ -24,7 +22,7 @@ Handle<Value> CallFunction(string name, Handle<Object> global, unsigned int argc
   Handle<Function> fn = Handle<Function>::Cast(wrappedFn);
 
   Handle<Value> result = fn->Call(global, argc, argv);
-  //assert(!result.IsEmpty() && "calling function failed");
+  assert(!result.IsEmpty() && "calling function failed");
   return result;
 }
 
@@ -54,25 +52,21 @@ int main(int argc, const char *argv[]) {
   Isolate* isolate = Isolate::GetCurrent();
   HandleScope handle_scope(isolate);
 
-  Handle<ObjectTemplate> global_tmpl = ObjectTemplate::New();
-
-  Handle<Context> context = Context::New(isolate, NULL, global_tmpl);
+  Handle<Context> context = Context::New(isolate);
   Context::Scope context_scope(context);
 
-  Handle<Object> global = context->Global();
-
-  // compile js
+  // compile and run js
   Handle<String> source = GetScript();
-  Handle<Script> script = Script::Compile(source);
-  script->Run();
+  Script::Compile(source)->Run();
 
   // call functions
+  Handle<Object> global = context->Global();
 
-  // hello
+  // -- hello
   Handle<Value> result = CallFunction("hello", global, 0, NULL);
   printf("hello returned %s\n", *String::Utf8Value(result));
 
-  // multi
+  // -- multi
   Handle<Value> args[2];
   SetArg(string("hi"), 0, args);
   SetArg(5.0, 1, args);
@@ -80,14 +74,14 @@ int main(int argc, const char *argv[]) {
   result = CallFunction("multi", global, 2, args);
   printf("multi returned %s\n", *String::Utf8Value(result));
 
-  // equal(1.0, 1.0)
+  // -- equal(1.0, 1.0)
   SetArg(1.0, 0, args);
   SetArg(1.0, 1, args);
 
   result = CallFunction("equal", global, 2, args);
   printf("equal(1.0, 1.0) returned %s\n", *String::Utf8Value(result));
 
-  // equal(1.0, 2.0)
+  // -- equal(1.0, 2.0)
   SetArg(1.0, 0, args);
   SetArg(2.0, 1, args);
 
