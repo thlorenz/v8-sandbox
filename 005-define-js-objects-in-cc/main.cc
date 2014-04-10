@@ -19,18 +19,8 @@ void Multiply(const FunctionCallbackInfo<Value>& argv) {
   argv.GetReturnValue().Set(self);
 }
 
-void PointCtor(const FunctionCallbackInfo<Value>& argv) {
-  Handle<ObjectTemplate> t = ObjectTemplate::New();
-
-  Handle<Number> x = argv[0]->IsNumber() ? argv[0]->ToNumber() : Number::New(0);
-  Handle<Number> y = argv[1]->IsNumber() ? argv[1]->ToNumber() : Number::New(0);
-
-  t->Set(String::New("x"), x);
-  t->Set(String::New("y"), y);
-
-  t->Set(String::New("multiply"), FunctionTemplate::New(Multiply));
-
-  argv.GetReturnValue().Set(t->NewInstance());
+void AddFunction(Handle<Object> global, const char* name, FunctionCallback callback) {
+  global->Set(String::New(name), FunctionTemplate::New(callback)->GetFunction());
 }
 
 Handle<String> GetScript() {
@@ -45,8 +35,19 @@ Handle<String> GetScript() {
   return String::New(js, strlen(js));
 }
 
-void AddFunction(Handle<Object> global, const char* name, FunctionCallback callback) {
-  global->Set(String::New(name), FunctionTemplate::New(callback)->GetFunction());
+// dynamically create properties on the Point object when ctor is invoked from js
+void PointCtor(const FunctionCallbackInfo<Value>& argv) {
+  Handle<ObjectTemplate> t = ObjectTemplate::New();
+
+  Handle<Number> x = argv[0]->IsNumber() ? argv[0]->ToNumber() : Number::New(0);
+  Handle<Number> y = argv[1]->IsNumber() ? argv[1]->ToNumber() : Number::New(0);
+
+  t->Set(String::New("x"), x);
+  t->Set(String::New("y"), y);
+
+  t->Set(String::New("multiply"), FunctionTemplate::New(Multiply));
+
+  argv.GetReturnValue().Set(t->NewInstance());
 }
 
 int main(int argc, const char *argv[]) {
