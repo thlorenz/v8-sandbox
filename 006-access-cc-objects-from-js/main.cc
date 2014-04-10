@@ -13,6 +13,7 @@ Handle<String> GetScript() {
     "'use strict';"
     ""
     "var p = new Point(1, 2);"
+    "p.y = p.y + 1;"
     "p.multiply(4).multiply(2);"
     "'x: ' + p.x + ' y: ' + p.y;";
 
@@ -34,25 +35,19 @@ public:
   }
 };
 
-Point* UnwrapPoint(const PropertyCallbackInfo<Value>& info) {
+template <typename T, typename CallbackInfo>
+T* Unwrap(const CallbackInfo& info) {
   Local<Object> self = info.Holder();
   Local<External> external = Local<External>::Cast(self->GetInternalField(0));
 
-  return static_cast<Point*>(external->Value());
-}
-
-Point* UnwrapPoint(const FunctionCallbackInfo<Value>& info) {
-  Local<Object> self = info.Holder();
-  Local<External> external = Local<External>::Cast(self->GetInternalField(0));
-
-  return static_cast<Point*>(external->Value());
+  return static_cast<T*>(external->Value());
 }
 
 void Multiply(const FunctionCallbackInfo<Value>& args) {
   Local<Object> self = args.This();
 
   int factor = args[0]->Int32Value();
-  Point* point = UnwrapPoint(args);
+  Point* point = Unwrap<Point>(args);
 
   point->multiply(factor);
 
@@ -61,22 +56,22 @@ void Multiply(const FunctionCallbackInfo<Value>& args) {
 }
 
 void GetPointX(Local<String> property, const PropertyCallbackInfo<Value>& info) {
-  Point* p = UnwrapPoint(info);
+  Point* p = Unwrap<Point>(info);
   info.GetReturnValue().Set(Number::New(p->_x));
 }
 
 void SetPointX(Local<String> property, Local<Value> value, const PropertyCallbackInfo<Value>& info) {
-  Point* p = UnwrapPoint(info);
+  Point* p = Unwrap<Point>(info);
   p->_x = value->Int32Value();
 }
 
 void GetPointY(Local<String> property, const PropertyCallbackInfo<Value>& info) {
-  Point* p = UnwrapPoint(info);
+  Point* p = Unwrap<Point>(info);
   info.GetReturnValue().Set(Number::New(p->_y));
 }
 
 void SetPointY(Local<String> property, Local<Value> value, const PropertyCallbackInfo<Value>& info) {
-  Point* p = UnwrapPoint(info);
+  Point* p = Unwrap<Point>(info);
   p->_y = value->Int32Value();
 }
 
