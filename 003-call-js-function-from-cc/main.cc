@@ -17,16 +17,19 @@ void SetArg(bool flag, unsigned int idx, Handle<Value> argv[]) {
   argv[idx] = Boolean::New(flag);
 }
 
-Handle<Value> CallFunction(string name, Handle<Object> global, unsigned int argc, Handle<Value> argv[]) {
+Handle<Value> CallFunction(Isolate* isolate, string name, Handle<Object> global, unsigned int argc, Handle<Value> argv[]) {
+  HandleScope handle_scope(isolate);
+
   Handle<Value> wrappedFn = global->Get(String::New(name.c_str()));
   Handle<Function> fn = Handle<Function>::Cast(wrappedFn);
 
   Handle<Value> result = fn->Call(global, argc, argv);
   assert(!result.IsEmpty() && "calling function failed");
-  return result;
+
+  return handle_scope.Close(result);
 }
 
-Handle<String> GetScript() {
+Handle<String> GetScript(Isolate* isolate) {
   string src =
     "'use strict';"
     ""
@@ -45,7 +48,7 @@ Handle<String> GetScript() {
     "}";
 
   const char *js = src.c_str();
-  return String::New(js, strlen(js));
+  return String::NewFromUtf8(isolate, js);
 }
 
 int main(int argc, const char *argv[]) {
@@ -56,14 +59,14 @@ int main(int argc, const char *argv[]) {
   Context::Scope context_scope(context);
 
   // compile and run js
-  Handle<String> source = GetScript();
+  Handle<String> source = GetScript(isolate);
   Script::Compile(source)->Run();
 
   // call functions
   Handle<Object> global = context->Global();
 
   // -- hello
-  Handle<Value> result = CallFunction("hello", global, 0, NULL);
+  Handle<Value> result = CallFunction(isolate, "hello", global, 0, NULL);
   printf("hello returned %s\n", *String::Utf8Value(result));
 
   // -- multi
@@ -71,21 +74,21 @@ int main(int argc, const char *argv[]) {
   SetArg(string("hi"), 0, args);
   SetArg(5.0, 1, args);
 
-  result = CallFunction("multi", global, 2, args);
+  result = CallFunction(isolate, "multi", global, 2, args);
   printf("multi returned %s\n", *String::Utf8Value(result));
 
   // -- equal(1.0, 1.0)
   SetArg(1.0, 0, args);
   SetArg(1.0, 1, args);
 
-  result = CallFunction("equal", global, 2, args);
+  result = CallFunction(isolate, "equal", global, 2, args);
   printf("equal(1.0, 1.0) returned %s\n", *String::Utf8Value(result));
 
   // -- equal(1.0, 2.0)
   SetArg(1.0, 0, args);
   SetArg(2.0, 1, args);
 
-  result = CallFunction("equal", global, 2, args);
+  result = CallFunction(isolate, "equal", global, 2, args);
   printf("equal(1.0, 2.0) returned %s\n", *String::Utf8Value(result));
 
 

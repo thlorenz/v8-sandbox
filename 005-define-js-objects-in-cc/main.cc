@@ -4,26 +4,30 @@
 using namespace std;
 using namespace v8;
 
-void Multiply(const FunctionCallbackInfo<Value>& argv) {
-  Local<Object> self = argv.This();
+void Multiply(const FunctionCallbackInfo<Value>& info) {
+  Isolate* isolate = info.GetIsolate();
+  HandleScope handle_scope(isolate);
 
-  int x = self->Get(String::New("x"))->Int32Value();
-  int y = self->Get(String::New("y"))->Int32Value();
+  Local<Object> self = info.This();
 
-  int factor = argv[0]->Int32Value();
+  int x = self->Get(String::NewFromUtf8(isolate, "x"))->Int32Value();
+  int y = self->Get(String::NewFromUtf8(isolate, "y"))->Int32Value();
 
-  self->Set(String::New("x"), Number::New(x * factor));
-  self->Set(String::New("y"), Number::New(y * factor));
+  int factor = info[0]->Int32Value();
+
+  self->Set(String::NewFromUtf8(isolate, "x"), Number::New(x * factor));
+  self->Set(String::NewFromUtf8(isolate, "y"), Number::New(y * factor));
 
   // support chaining
-  argv.GetReturnValue().Set(self);
+  info.GetReturnValue().Set(self);
 }
 
-void AddFunction(Handle<Object> global, const char* name, FunctionCallback callback) {
-  global->Set(String::New(name), FunctionTemplate::New(callback)->GetFunction());
+void AddFunction(Isolate* isolate, Handle<Object> global, const char* name, FunctionCallback callback) {
+  HandleScope handle_scope(isolate);
+  global->Set(String::NewFromUtf8(isolate, name), FunctionTemplate::New(callback)->GetFunction());
 }
 
-Handle<String> GetScript() {
+Handle<String> GetScript(Isolate* isolate) {
   string src =
     "'use strict';"
     ""
@@ -32,22 +36,25 @@ Handle<String> GetScript() {
     "'x: ' + p.x + ' y: ' + p.y;";
 
   const char *js = src.c_str();
-  return String::New(js, strlen(js));
+  return String::NewFromUtf8(isolate, js);
 }
 
 // dynamically create properties on the Point object when ctor is invoked from js
-void PointCtor(const FunctionCallbackInfo<Value>& argv) {
+void PointCtor(const FunctionCallbackInfo<Value>& info) {
+  Isolate* isolate = info.GetIsolate();
+  HandleScope handle_scope(isolate);
+
   Handle<ObjectTemplate> t = ObjectTemplate::New();
 
-  Handle<Number> x = argv[0]->IsNumber() ? argv[0]->ToNumber() : Number::New(0);
-  Handle<Number> y = argv[1]->IsNumber() ? argv[1]->ToNumber() : Number::New(0);
+  Handle<Number> x = info[0]->IsNumber() ? info[0]->ToNumber() : Number::New(0);
+  Handle<Number> y = info[1]->IsNumber() ? info[1]->ToNumber() : Number::New(0);
 
-  t->Set(String::New("x"), x);
-  t->Set(String::New("y"), y);
+  t->Set(String::NewFromUtf8(isolate, "x"), x);
+  t->Set(String::NewFromUtf8(isolate, "y"), y);
 
-  t->Set(String::New("multiply"), FunctionTemplate::New(Multiply));
+  t->Set(String::NewFromUtf8(isolate, "multiply"), FunctionTemplate::New(Multiply));
 
-  argv.GetReturnValue().Set(t->NewInstance());
+  info.GetReturnValue().Set(t->NewInstance());
 }
 
 int main(int argc, const char *argv[]) {
@@ -58,10 +65,10 @@ int main(int argc, const char *argv[]) {
 
   // add functions to global context
   Handle<Object> global = context->Global();
-  AddFunction(global, "Point", PointCtor);
+  AddFunction(isolate, global, "Point", PointCtor);
 
   // compile and run js
-  Handle<String> source = GetScript();
+  Handle<String> source = GetScript(isolate);
   Handle<Value> result = Script::Compile(source)->Run();
 
   cout << "Running script returned: " << *String::Utf8Value(result);

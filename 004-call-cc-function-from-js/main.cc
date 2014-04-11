@@ -34,7 +34,7 @@ void Add(const FunctionCallbackInfo<Value>& argv) {
   argv.GetReturnValue().Set(Number::New(sum));
 }
 
-Handle<String> GetScript() {
+Handle<String> GetScript(Isolate* isolate) {
   string src =
     "'use strict';"
     ""
@@ -45,7 +45,7 @@ Handle<String> GetScript() {
     "add(sum1, sum2);";
 
   const char *js = src.c_str();
-  return String::New(js, strlen(js));
+  return String::NewFromUtf8(isolate, js);
 }
 
 void AddFunction(Handle<Object> global, const char* name, FunctionCallback callback) {
@@ -64,7 +64,7 @@ int main(int argc, const char *argv[]) {
   AddFunction(global, "add", Add);
 
   // compile and run js
-  Handle<String> source = GetScript();
+  Handle<String> source = GetScript(isolate);
   Handle<Value> result = Script::Compile(source)->Run();
 
   cout << "Running script returned: " << *String::Utf8Value(result);
