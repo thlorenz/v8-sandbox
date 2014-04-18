@@ -18,7 +18,7 @@ void SetArg(bool flag, unsigned int idx, Handle<Value> argv[]) {
 }
 
 Handle<Value> CallFunction(Isolate* isolate, string name, Handle<Object> global, unsigned int argc, Handle<Value> argv[]) {
-  HandleScope handle_scope(isolate);
+  HandleScope handle_scope;
 
   Handle<Value> wrappedFn = global->Get(String::New(name.c_str()));
   Handle<Function> fn = Handle<Function>::Cast(wrappedFn);
@@ -48,14 +48,14 @@ Handle<String> GetScript(Isolate* isolate) {
     "}";
 
   const char *js = src.c_str();
-  return String::NewFromUtf8(isolate, js);
+  return String::New(js);
 }
 
 int main(int argc, const char *argv[]) {
   Isolate* isolate = Isolate::GetCurrent();
-  HandleScope handle_scope(isolate);
+  HandleScope handle_scope;
 
-  Handle<Context> context = Context::New(isolate);
+  Handle<Context> context = Context::New();
   Context::Scope context_scope(context);
 
   // compile and run js

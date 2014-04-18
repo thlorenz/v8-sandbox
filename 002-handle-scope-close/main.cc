@@ -5,7 +5,7 @@ using namespace v8;
 
 Handle<Array> getItems(int x, int y, int z) {
   Isolate* isolate = Isolate::GetCurrent();
-  HandleScope handle_scope(isolate);
+  HandleScope handle_scope;
 
   Handle<Array> items = Array::New(3);
 
@@ -27,8 +27,8 @@ Handle<Array> getItems(int x, int y, int z) {
 
 int main(int argc, const char *argv[]) {
   Isolate* isolate = Isolate::GetCurrent();
-  HandleScope handle_scope(isolate);
-  Handle<Context> context = Context::New(isolate);
+  HandleScope handle_scope;
+  Handle<Context> context = Context::New();
   Context::Scope context_scope(context);
 
   Handle<Array> items = getItems(3, 4, 2);

@@ -5,10 +5,10 @@ include ../v8.mk
 build: 
 	clang++ -I$(V8)/include main.cc -o main                         \
 	-Wl,--start-group                                              \
-		$(V8)/out/$(V8_ARCH)/obj.target/tools/gyp/libv8_base.x64.a   \
+		$(V8)/out/$(V8_ARCH)/obj.target/tools/gyp/libv8_base.a   \
 		$(V8)/out/$(V8_ARCH)/obj.target/tools/gyp/libv8_snapshot.a   \
 	-Wl,--end-group                                                \
-	-lrt
+	-lpthread -lrt
 
 run: build
 	./main

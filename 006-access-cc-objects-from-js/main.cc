@@ -4,9 +4,9 @@
 using namespace std;
 using namespace v8;
 
-void AddFunction(Isolate* isolate, Handle<Object> global, const char* name, FunctionCallback callback) {
-  HandleScope handle_scope(isolate);
-  global->Set(String::NewFromUtf8(isolate, name), FunctionTemplate::New(callback)->GetFunction());
+typedef Handle<Value> (*FunctionCallback)(const Arguments& info);
+void AddFunction(Handle<Object> global, const char* name, FunctionCallback callback) {
+  global->Set(String::New(name), FunctionTemplate::New(callback)->GetFunction());
 }
 
 Handle<String> GetScript(Isolate* isolate) {
@@ -19,7 +19,7 @@ Handle<String> GetScript(Isolate* isolate) {
     "'x: ' + p.x + ' y: ' + p.y;";
 
   const char *js = src.c_str();
-  return String::NewFromUtf8(isolate, js);
+  return String::New(js);
 }
 
 // Here we define all Point properties and functions in C++
@@ -39,7 +39,7 @@ public:
 template <typename T, typename CallbackInfo>
 T* Unwrap(const CallbackInfo& info) {
   Isolate* isolate = info.GetIsolate();
-  HandleScope handle_scope(isolate);
+  HandleScope handle_scope;
 
   Local<Object> self = info.Holder();
   Local<External> external = Local<External>::Cast(self->GetInternalField(0));
@@ -47,9 +47,9 @@ T* Unwrap(const CallbackInfo& info) {
   return static_cast<T*>(external->Value());
 }
 
-void Multiply(const FunctionCallbackInfo<Value>& info) {
+Handle<Value> Multiply(const Arguments& info) {
   Isolate* isolate = info.GetIsolate();
-  HandleScope handle_scope(isolate);
+  HandleScope handle_scope;
 
   Local<Object> self = info.This();
 
@@ -59,44 +59,46 @@ void Multiply(const FunctionCallbackInfo<Value>& info) {
   point->multiply(factor);
 
   // support chaining
-  info.GetReturnValue().Set(self);
+  return self;
 }
 
-void GetPointX(Local<String> property, const PropertyCallbackInfo<Value>& info) {
-  HandleScope handle_scope(info.GetIsolate());
+Handle<Value> GetPointX(Local<String> property, const AccessorInfo& info) {
+  HandleScope handle_scope;
   Point* p = Unwrap<Point>(info);
-  info.GetReturnValue().Set(Number::New(p->_x));
+  return Number::New(p->_x);
 }
 
-void SetPointX(Local<String> property, Local<Value> value, const PropertyCallbackInfo<Value>& info) {
-  HandleScope handle_scope(info.GetIsolate());
+Handle<Value> SetPointX(Local<String> property, Local<Value> value, const AccessorInfo& info) {
+  HandleScope handle_scope;
   Point* p = Unwrap<Point>(info);
   p->_x = value->Int32Value();
+  return Undefined();
 }
 
-void GetPointY(Local<String> property, const PropertyCallbackInfo<Value>& info) {
-  HandleScope handle_scope(info.GetIsolate());
+Handle<Value> GetPointY(Local<String> property, const AccessorInfo& info) {
+  HandleScope handle_scope;
   Point* p = Unwrap<Point>(info);
-  info.GetReturnValue().Set(Number::New(p->_y));
+  return Number::New(p->_y);
 }
 
-void SetPointY(Local<String> property, Local<Value> value, const PropertyCallbackInfo<Value>& info) {
-  HandleScope handle_scope(info.GetIsolate());
+Handle<Value> SetPointY(Local<String> property, Local<Value> value, const AccessorInfo& info) {
+  HandleScope handle_scope;
   Point* p = Unwrap<Point>(info);
   p->_y = value->Int32Value();
+  return Undefined();
 }
 
 // expose accessors to be used from js
-void PointCtor(const FunctionCallbackInfo<Value>& info) {
+Handle<Value> PointCtor(const Arguments& info) {
   Isolate* isolate = info.GetIsolate();
-  HandleScope handle_scope(isolate);
+  HandleScope handle_scope;
 
   Handle<ObjectTemplate> t = ObjectTemplate::New();
 
   // js point object represents one C++ object
   t->SetInternalFieldCount(1);
-  t->SetAccessor(String::NewFromUtf8(isolate, "x"), GetPointX, (AccessorSetterCallback) SetPointX);
-  t->SetAccessor(String::NewFromUtf8(isolate, "y"), GetPointY, (AccessorSetterCallback) SetPointY);
+  t->SetAccessor(String::New("x"), GetPointX, (AccessorSetter) SetPointX);
+  t->SetAccessor(String::New("y"), GetPointY, (AccessorSetter) SetPointY);
 
   t->Set(String::New("multiply"), FunctionTemplate::New(Multiply));
 
@@ -108,18 +110,18 @@ void PointCtor(const FunctionCallbackInfo<Value>& info) {
   Local<Object> wrap = t->NewInstance();
   wrap->SetInternalField(0, External::New(p));
 
-  info.GetReturnValue().Set(wrap);
+  return wrap;
 }
 
 int main(int argc, const char *argv[]) {
   Isolate* isolate = Isolate::GetCurrent();
-  HandleScope handle_scope(isolate);
-  Handle<Context> context = Context::New(isolate);
+  HandleScope handle_scope;
+  Handle<Context> context = Context::New();
   Context::Scope context_scope(context);
 
   // add functions to global context
   Handle<Object> global = context->Global();
-  AddFunction(isolate, global, "Point", PointCtor);
+  AddFunction(global, "Point", PointCtor);
 
   // compile and run js
   Handle<String> source = GetScript(isolate);

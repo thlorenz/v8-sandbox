@@ -4,7 +4,7 @@
 using namespace std;
 using namespace v8;
 
-void Print(const FunctionCallbackInfo<Value>& argv) {
+Handle<Value> Print(const Arguments& argv) {
 
   cout << "printing ";
 
@@ -14,9 +14,10 @@ void Print(const FunctionCallbackInfo<Value>& argv) {
   }
 
   cout << endl;
+  return Undefined();
 }
 
-void Add(const FunctionCallbackInfo<Value>& argv) {
+Handle<Value> Add(const Arguments& argv) {
   cout << "adding ";
   int sum = 0;
   for (int i = 0; i < argv.Length(); i++) {
@@ -31,7 +32,7 @@ void Add(const FunctionCallbackInfo<Value>& argv) {
   }
 
   cout << "sum: " <<  sum << endl;
-  argv.GetReturnValue().Set(Number::New(sum));
+  return Number::New(sum);
 }
 
 Handle<String> GetScript(Isolate* isolate) {
@@ -45,17 +46,18 @@ Handle<String> GetScript(Isolate* isolate) {
     "add(sum1, sum2);";
 
   const char *js = src.c_str();
-  return String::NewFromUtf8(isolate, js);
+  return String::New(js);
 }
 
+typedef Handle<Value> (*FunctionCallback)(const Arguments& info);
 void AddFunction(Handle<Object> global, const char* name, FunctionCallback callback) {
   global->Set(String::New(name), FunctionTemplate::New(callback)->GetFunction());
 }
 
 int main(int argc, const char *argv[]) {
   Isolate* isolate = Isolate::GetCurrent();
-  HandleScope handle_scope(isolate);
-  Handle<Context> context = Context::New(isolate);
+  HandleScope handle_scope;
+  Handle<Context> context = Context::New();
   Context::Scope context_scope(context);
 
   // add functions to global context
