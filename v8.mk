@@ -12,8 +12,7 @@ v8: $(V8_LIB)
 	
 $(V8_LIB): $(V8_REPO) $(V8_GYP)
 	cd $(V8) && \
-	CXX=$(CXX) LINK=$(LINK) GYP_DEFINES=$(GYP_DEFINES) werror=no $(MAKE) native -j4 library=shared snapshot=on console=readline 
-	#i18nsupport=off
+	CXX=$(CXX) LINK=$(LINK) GYP_DEFINES=$(GYP_DEFINES) $(MAKE) native -j4 console=readline 
 
 $(V8_REPO):
 	cd $(ROOT)/deps &&\
@@ -23,8 +22,7 @@ $(V8_REPO):
 # `make dependencies` pulls in ICU, but all we need is gyp
 $(V8_GYP):
 	cd $(V8) && \
-	CXX=$(CXX) LINK=$(LINK) GYP_DEFINES=$(GYP_DEFINES) werror=no $(MAKE) dependencies
-	#test -d ./build/gyp || (mkdir -p ./build && git clone https://git.chromium.org/external/gyp.git ./build/gyp)
+	CXX=$(CXX) LINK=$(LINK) GYP_DEFINES=$(GYP_DEFINES) $(MAKE) dependencies
 
 
 .PHONY: v8
