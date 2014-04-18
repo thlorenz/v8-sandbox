@@ -4,7 +4,7 @@
 using namespace std;
 using namespace v8;
 
-void Print(const FunctionCallbackInfo<Value>& argv) {
+void Print(const v8::FunctionCallbackInfo<Value>& argv) {
 
   cout << "printing ";
 
@@ -16,7 +16,7 @@ void Print(const FunctionCallbackInfo<Value>& argv) {
   cout << endl;
 }
 
-void Add(const FunctionCallbackInfo<Value>& argv) {
+void Add(const v8::FunctionCallbackInfo<Value>& argv) {
   cout << "adding ";
   int sum = 0;
   for (int i = 0; i < argv.Length(); i++) {
@@ -31,7 +31,7 @@ void Add(const FunctionCallbackInfo<Value>& argv) {
   }
 
   cout << "sum: " <<  sum << endl;
-  argv.GetReturnValue().Set(Number::New(sum));
+  argv.GetReturnValue().Set(Number::New(argv.GetIsolate(), sum));
 }
 
 Handle<String> GetScript(Isolate* isolate) {
@@ -48,8 +48,8 @@ Handle<String> GetScript(Isolate* isolate) {
   return String::NewFromUtf8(isolate, js);
 }
 
-void AddFunction(Handle<Object> global, const char* name, FunctionCallback callback) {
-  global->Set(String::New(name), FunctionTemplate::New(callback)->GetFunction());
+void AddFunction(Isolate* isolate, Handle<Object> global, const char* name, FunctionCallback callback) {
+  global->Set(String::NewFromUtf8(isolate, name), FunctionTemplate::New(isolate, callback)->GetFunction());
 }
 
 int main(int argc, const char *argv[]) {
@@ -60,8 +60,8 @@ int main(int argc, const char *argv[]) {
 
   // add functions to global context
   Handle<Object> global = context->Global();
-  AddFunction(global, "print", Print);
-  AddFunction(global, "add", Add);
+  AddFunction(isolate, global, "print", Print);
+  AddFunction(isolate, global, "add", Add);
 
   // compile and run js
   Handle<String> source = GetScript(isolate);

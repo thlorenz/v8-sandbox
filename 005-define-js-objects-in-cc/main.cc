@@ -4,7 +4,7 @@
 using namespace std;
 using namespace v8;
 
-void Multiply(const FunctionCallbackInfo<Value>& info) {
+void Multiply(const v8::FunctionCallbackInfo<Value>& info) {
   Isolate* isolate = info.GetIsolate();
   HandleScope handle_scope(isolate);
 
@@ -15,16 +15,16 @@ void Multiply(const FunctionCallbackInfo<Value>& info) {
 
   int factor = info[0]->Int32Value();
 
-  self->Set(String::NewFromUtf8(isolate, "x"), Number::New(x * factor));
-  self->Set(String::NewFromUtf8(isolate, "y"), Number::New(y * factor));
+  self->Set(String::NewFromUtf8(isolate, "x"), Number::New(isolate, x * factor));
+  self->Set(String::NewFromUtf8(isolate, "y"), Number::New(isolate, y * factor));
 
   // support chaining
   info.GetReturnValue().Set(self);
 }
 
-void AddFunction(Isolate* isolate, Handle<Object> global, const char* name, FunctionCallback callback) {
+void AddFunction(Isolate* isolate, Handle<Object> global, const char* name, v8::FunctionCallback callback) {
   HandleScope handle_scope(isolate);
-  global->Set(String::NewFromUtf8(isolate, name), FunctionTemplate::New(callback)->GetFunction());
+  global->Set(String::NewFromUtf8(isolate, name), FunctionTemplate::New(isolate, callback)->GetFunction());
 }
 
 Handle<String> GetScript(Isolate* isolate) {
@@ -40,19 +40,19 @@ Handle<String> GetScript(Isolate* isolate) {
 }
 
 // dynamically create properties on the Point object when ctor is invoked from js
-void PointCtor(const FunctionCallbackInfo<Value>& info) {
+void PointCtor(const v8::FunctionCallbackInfo<Value>& info) {
   Isolate* isolate = info.GetIsolate();
   HandleScope handle_scope(isolate);
 
   Handle<ObjectTemplate> t = ObjectTemplate::New();
 
-  Handle<Number> x = info[0]->IsNumber() ? info[0]->ToNumber() : Number::New(0);
-  Handle<Number> y = info[1]->IsNumber() ? info[1]->ToNumber() : Number::New(0);
+  Handle<Number> x = info[0]->IsNumber() ? info[0]->ToNumber() : Number::New(isolate, 0);
+  Handle<Number> y = info[1]->IsNumber() ? info[1]->ToNumber() : Number::New(isolate, 0);
 
   t->Set(String::NewFromUtf8(isolate, "x"), x);
   t->Set(String::NewFromUtf8(isolate, "y"), y);
 
-  t->Set(String::NewFromUtf8(isolate, "multiply"), FunctionTemplate::New(Multiply));
+  t->Set(String::NewFromUtf8(isolate, "multiply"), FunctionTemplate::New(isolate, Multiply));
 
   info.GetReturnValue().Set(t->NewInstance());
 }

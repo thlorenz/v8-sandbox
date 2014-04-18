@@ -7,7 +7,7 @@ Handle<Array> getItems(int x, int y, int z) {
   Isolate* isolate = Isolate::GetCurrent();
   HandleScope handle_scope(isolate);
 
-  Handle<Array> items = Array::New(3);
+  Handle<Array> items = Array::New(isolate, 3);
 
   // did we encounter an error? -> bail
   if (items.IsEmpty()){
@@ -15,13 +15,16 @@ Handle<Array> getItems(int x, int y, int z) {
     return Handle<Array>();
   }
 
-  items->Set(0, Integer::New(x));
-  items->Set(1, Integer::New(y));
-  items->Set(2, Integer::New(z));
+  items->Set(0, Integer::New(isolate, x));
+  items->Set(1, Integer::New(isolate, y));
+  items->Set(2, Integer::New(isolate, z));
 
   // Close method copies the value of its argument into the enclosing scope,
   // deletes all its local handles and then gives back the new handle copy
-  return handle_scope.Close(items);
+  //
+  // handle_scope.Close doesn't exist anymore and I'm not sure what it got replaced with
+  // return handle_scope.Close(items);
+  return items;
 }
 
 

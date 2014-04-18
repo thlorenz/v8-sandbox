@@ -4,9 +4,9 @@
 using namespace std;
 using namespace v8;
 
-void AddFunction(Isolate* isolate, Handle<Object> global, const char* name, FunctionCallback callback) {
+void AddFunction(Isolate* isolate, Handle<Object> global, const char* name, v8::FunctionCallback callback) {
   HandleScope handle_scope(isolate);
-  global->Set(String::NewFromUtf8(isolate, name), FunctionTemplate::New(callback)->GetFunction());
+  global->Set(String::NewFromUtf8(isolate, name), FunctionTemplate::New(isolate, callback)->GetFunction());
 }
 
 Handle<String> GetScript(Isolate* isolate) {
@@ -47,7 +47,7 @@ T* Unwrap(const CallbackInfo& info) {
   return static_cast<T*>(external->Value());
 }
 
-void Multiply(const FunctionCallbackInfo<Value>& info) {
+void Multiply(const v8::FunctionCallbackInfo<Value>& info) {
   Isolate* isolate = info.GetIsolate();
   HandleScope handle_scope(isolate);
 
@@ -65,7 +65,7 @@ void Multiply(const FunctionCallbackInfo<Value>& info) {
 void GetPointX(Local<String> property, const PropertyCallbackInfo<Value>& info) {
   HandleScope handle_scope(info.GetIsolate());
   Point* p = Unwrap<Point>(info);
-  info.GetReturnValue().Set(Number::New(p->_x));
+  info.GetReturnValue().Set(Number::New(info.GetIsolate(), p->_x));
 }
 
 void SetPointX(Local<String> property, Local<Value> value, const PropertyCallbackInfo<Value>& info) {
@@ -77,7 +77,7 @@ void SetPointX(Local<String> property, Local<Value> value, const PropertyCallbac
 void GetPointY(Local<String> property, const PropertyCallbackInfo<Value>& info) {
   HandleScope handle_scope(info.GetIsolate());
   Point* p = Unwrap<Point>(info);
-  info.GetReturnValue().Set(Number::New(p->_y));
+  info.GetReturnValue().Set(Number::New(info.GetIsolate(), p->_y));
 }
 
 void SetPointY(Local<String> property, Local<Value> value, const PropertyCallbackInfo<Value>& info) {
@@ -87,7 +87,7 @@ void SetPointY(Local<String> property, Local<Value> value, const PropertyCallbac
 }
 
 // expose accessors to be used from js
-void PointCtor(const FunctionCallbackInfo<Value>& info) {
+void PointCtor(const v8::FunctionCallbackInfo<Value>& info) {
   Isolate* isolate = info.GetIsolate();
   HandleScope handle_scope(isolate);
 
@@ -98,7 +98,7 @@ void PointCtor(const FunctionCallbackInfo<Value>& info) {
   t->SetAccessor(String::NewFromUtf8(isolate, "x"), GetPointX, (AccessorSetterCallback) SetPointX);
   t->SetAccessor(String::NewFromUtf8(isolate, "y"), GetPointY, (AccessorSetterCallback) SetPointY);
 
-  t->Set(String::New("multiply"), FunctionTemplate::New(Multiply));
+  t->Set(String::NewFromUtf8(isolate, "multiply"), FunctionTemplate::New(isolate, Multiply));
 
   // initialize point with passed info or (0, 0)
   int x = info[0]->IsNumber() ? info[0]->Int32Value() : 0;
@@ -106,7 +106,7 @@ void PointCtor(const FunctionCallbackInfo<Value>& info) {
 
   Point *p = new Point(x, y);
   Local<Object> wrap = t->NewInstance();
-  wrap->SetInternalField(0, External::New(p));
+  wrap->SetInternalField(0, External::New(isolate, p));
 
   info.GetReturnValue().Set(wrap);
 }
