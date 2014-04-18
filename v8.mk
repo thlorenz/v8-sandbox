@@ -8,7 +8,7 @@ V8_REPO = $(V8).gitignore
 V8_LIB  = $(V8)out/native/obj.target/tools/gyp/libv8_{base.x64,snapshot}.a
 V8_GYP  = $(V8)build/gyp/gyp
 V8_ARCH ?= native
-V8_VERSION ?= 3.24.22
+V8_VERSION ?= 3.25.30
 
 v8: $(V8_LIB)
 	
