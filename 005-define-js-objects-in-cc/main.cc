@@ -1,5 +1,6 @@
 #include <iostream>
-#include <v8.h>
+#include "include/v8.h"
+#include "libplatform/libplatform.h"
 
 using namespace std;
 using namespace v8;
@@ -58,20 +59,33 @@ void PointCtor(const v8::FunctionCallbackInfo<Value>& info) {
 }
 
 int main(int argc, const char *argv[]) {
-  Isolate* isolate = Isolate::GetCurrent();
-  HandleScope handle_scope(isolate);
-  Handle<Context> context = Context::New(isolate);
-  Context::Scope context_scope(context);
+  V8::InitializeICU();
+  Platform* platform = platform::CreateDefaultPlatform();
+  V8::InitializePlatform(platform);
+  V8::Initialize();
 
-  // add functions to global context
-  Handle<Object> global = context->Global();
-  AddFunction(isolate, global, "Point", PointCtor);
+  Isolate* isolate = Isolate::New();
+  {
+    Isolate::Scope isolate_scope(isolate);
+    HandleScope handle_scope(isolate);
+    Local<Context> context = Context::New(isolate);
+    Context::Scope context_scope(context);
 
-  // compile and run js
-  Handle<String> source = GetScript(isolate);
-  Handle<Value> result = Script::Compile(source)->Run();
+    // add functions to global context
+    Handle<Object> global = context->Global();
+    AddFunction(isolate, global, "Point", PointCtor);
 
-  cout << "Running script returned: " << *String::Utf8Value(result);
+    // compile and run js
+    Handle<String> source = GetScript(isolate);
+    Handle<Value> result = Script::Compile(source)->Run();
+
+    cout << "Running script returned: " << *String::Utf8Value(result);
+  }
+
+  isolate->Dispose();
+  V8::Dispose();
+  V8::ShutdownPlatform();
+  delete platform;
 
   return 0;
 }
