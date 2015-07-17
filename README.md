@@ -9,10 +9,18 @@ Trying to get a better understanding how to embed `v8` in another library by fol
 
 After cloning the repo you should be able to try each example via a simple `make run`.
 
-The very first time `v8` will get built. You can perform that step only by running `make v8` from any of the example
+Example:
+
+```
+cd 001-getting-started && make run
+```
+
+The very first time `v8` will get built. You can perform that step only by running `make` from any of the example
 directories.
 
-**Note**: you should have `g++`, `clang++`, `svn` and `git` installed on your system.
+**Note**:
+- you should have `g++` (for older v8 versions), `clang++`, `svn` (for older v8 versions) and `git` installed on your system.
+- newer versions require `ninja` (`brew install ninja`) to speed up the build
 
 ## v8 versions
 
